@@ -1,0 +1,64 @@
+.acknowledgements {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.acknowledgements h1 {
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+}
+
+.acknowledgements-content {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.acknowledgement-section {
+  margin-bottom: 2rem;
+}
+
+.acknowledgement-section:last-child {
+  margin-bottom: 0;
+}
+
+.acknowledgement-section h2 {
+  color: #3498db;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.acknowledgement-section p {
+  color: #34495e;
+  line-height: 1.6;
+  font-size: 1rem;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .acknowledgements {
+    margin: 1rem auto;
+  }
+
+  .acknowledgements h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .acknowledgements-content {
+    padding: 1.5rem;
+  }
+
+  .acknowledgement-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .acknowledgement-section h2 {
+    font-size: 1.2rem;
+  }
+} 

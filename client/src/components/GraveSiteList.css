@@ -1,109 +1,273 @@
 .grave-site-list {
-  padding: 1rem;
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  background-color: var(--bg-main);
 }
 
 .grave-site-list h2 {
   margin-top: 0;
-  color: #2c3e50;
+  color: var(--primary);
+  font-family: var(--font-heading);
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 0.5rem;
+  display: inline-block;
+  margin-bottom: 1.5rem;
 }
 
-.sites-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1rem;
+/* Search Bar */
+.search-container {
+  margin-bottom: 2rem;
+  background-color: var(--bg-surface);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.search-input {
+  width: 100%;
   padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: var(--font-body);
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+  background-color: #fafafa;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.1);
+}
+
+.search-filters {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  background: #f0f0f0;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-label:hover {
+  background: #e0e0e0;
+}
+
+/* Card List */
+.sites-container {
+  display: flex;
+  flex-direction: column;
+  /* Vertical list in sidebar usually better than grid */
+  gap: 1.5rem;
+  padding-bottom: 2rem;
 }
 
 .grave-site-card {
-  background-color: white;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease-in-out;
+  background-color: var(--bg-surface);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .grave-site-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent);
+}
+
+.grave-site-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background-color: var(--accent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.grave-site-card:hover::before {
+  opacity: 1;
 }
 
 .grave-site-card h3 {
-  margin: 0 0 0.5rem 0;
-  color: #2c3e50;
+  margin: 0 0 0.25rem 0;
+  color: var(--primary);
+  font-size: 1.4rem;
 }
 
 .profession {
-  color: #27ae60;
-  font-weight: 500;
-  margin: 0 0 0.5rem 0;
-  font-size: 0.9rem;
-}
-
-.description {
-  color: #666;
+  color: var(--accent);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
   margin-bottom: 1rem;
-  font-size: 0.9rem;
+  display: block;
 }
 
 .dates {
-  font-size: 0.8rem;
-  color: #666;
-  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.intro-container {
+  margin-bottom: 1rem;
+}
+
+.intro {
+  color: var(--text-main);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  font-style: normal;
+  /* Removed italic for better readability */
+}
+
+.see-more-button {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-weight: 600;
+  padding: 0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.see-more-button:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+  background-color: var(--bg-main);
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.details-grid p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.details-grid strong {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.images-grid {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+  scrollbar-width: thin;
+}
+
+.images-grid .grave-image {
+  width: 180px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.images-grid .grave-image:hover {
+  transform: scale(1.05);
 }
 
 .grave-image {
   width: 100%;
-  height: 150px;
+  height: 220px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 8px;
   margin-top: 1rem;
   cursor: pointer;
-  transition: opacity 0.2s ease-in-out;
+  box-shadow: var(--shadow-sm);
 }
 
-.grave-image:hover {
-  opacity: 0.9;
-}
-
-/* Modal styles */
+/* Modal styles for Image */
 .image-modal {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: rgba(26, 26, 26, 0.95);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 2000;
+  backdrop-filter: blur(5px);
 }
 
 .modal-content {
   position: relative;
-  max-width: 90%;
-  max-height: 90vh;
+  max-width: 95%;
+  max-height: 95vh;
 }
 
 .close-button {
   position: absolute;
-  top: -40px;
+  top: -50px;
   right: 0;
   color: white;
-  font-size: 30px;
-  font-weight: bold;
+  font-size: 2rem;
   cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.close-button:hover {
+  transform: scale(1.1);
+  color: var(--accent);
 }
 
 .enlarged-image {
   max-width: 100%;
   max-height: 90vh;
   object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-  .sites-container {
-    grid-template-columns: 1fr;
-  }
-} 
+/* Clickable Name for navigation */
+.clickable-name {
+  cursor: pointer;
+  transition: color 0.2s ease;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.clickable-name:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
