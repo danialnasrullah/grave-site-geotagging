@@ -66,6 +66,36 @@
   box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.2);
 }
 
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper input {
+  flex: 1;
+  padding-right: 3.75rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+}
+
+.password-toggle:hover {
+  color: var(--accent-hover);
+}
+
 .login-submit {
   margin-top: 0.5rem;
   padding: 0.8rem;
