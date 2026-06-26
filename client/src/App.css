@@ -289,12 +289,62 @@ h6 {
   }
 }
 
+/* Scrollable wrapper around routed pages (map page fills it; long pages like
+   Acknowledgements scroll within it, since body/.app are locked to 100vh). */
+.app-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.main-content {
+  height: 100%;
+}
+
 /* ===== Mobile capture-first view ===== */
 .main-content.mobile-view {
-  display: block;
+  display: flex;
+  flex-direction: column;
   height: 100%;
   position: relative;
   overflow: hidden;
+}
+
+/* Map / List segmented toggle */
+.mobile-tabs {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.mobile-tabs button {
+  flex: 1;
+  padding: 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-main);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mobile-tabs button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Panel that holds either the map or the list */
+.mobile-panel {
+  flex: 1;
+  min-height: 0;
+  position: relative;
 }
 
 .mobile-view .map-container {
@@ -302,12 +352,19 @@ h6 {
   width: 100%;
 }
 
-/* Prominent "Add Grave" button floating over the map */
+.mobile-list {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 5.5rem; /* clearance for the floating Add button */
+}
+
+/* Prominent "Add Grave" button floating over the panel */
 .mobile-fab {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(52px + 1.25rem);
+  bottom: 1.25rem;
   z-index: 1200;
   background: var(--accent);
   color: #fff;
@@ -323,59 +380,6 @@ h6 {
 
 .mobile-fab:active {
   transform: translateX(-50%) scale(0.97);
-}
-
-/* Slide-up list drawer (peeks a handle, expands on tap) */
-.mobile-drawer {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1100;
-  background: var(--bg-surface);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.18);
-  transform: translateY(calc(100% - 52px));
-  transition: transform 0.3s ease;
-  max-height: 82%;
-  display: flex;
-  flex-direction: column;
-}
-
-.mobile-drawer.open {
-  transform: translateY(0);
-}
-
-.mobile-drawer-handle {
-  flex-shrink: 0;
-  height: 52px;
-  width: 100%;
-  border: none;
-  background: none;
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--text-main);
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.mobile-drawer-grip {
-  width: 40px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--border-color);
-}
-
-.mobile-drawer-body {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 0 0.5rem 1rem;
 }
 
 /* Custom Marker Styles */

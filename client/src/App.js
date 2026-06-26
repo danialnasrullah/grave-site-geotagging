@@ -60,7 +60,7 @@ const MapClickHandler = ({ isPicking, onLocationPicked }) => {
 function Home({ addMode, setAddMode }) {
   const isMobile = useIsMobile();
   const { isAuthenticated } = useAuth();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState('map'); // 'map' | 'list'
   const [graveSites, setGraveSites] = useState([]);
   const [hoveredGrave, setHoveredGrave] = useState(null);
   const [selectedGrave, setSelectedGrave] = useState(null); // For the independent popup
@@ -166,17 +166,9 @@ function Home({ addMode, setAddMode }) {
     }
   };
 
-  return (
-    <div className={`main-content ${isMobile ? 'mobile-view' : ''}`}>
-      {isPickingLocation && (
-        <div className="picking-mode-banner">
-          <p>Click on the map to select the location</p>
-          <button onClick={() => { setIsPickingLocation(false); setAddMode('manual'); }}>Cancel</button>
-        </div>
-      )}
-
-      <div className="map-container">
-        <MapContainer
+  const mapBlock = (
+    <div className="map-container">
+      <MapContainer
           center={[31.5496, 74.3078]}
           zoom={16}
           minZoom={15}
@@ -280,52 +272,72 @@ function Home({ addMode, setAddMode }) {
         )}
 
       </div>
-      {/* Desktop: persistent sidebar with list (and manual form). */}
-      {!isMobile && (
-        <div className="sidebar">
-          {addMode === 'manual' && (
-            <AddGraveForm
-              onSubmit={handleAddGrave}
-              onClose={handleFormClose}
-              onPickLocation={handlePickLocationStart}
-              initialData={pickingFormState}
-            />
-          )}
-          <GraveSiteList
-            graveSites={graveSites}
-            onGraveClick={handleGraveClickFromList}
-          />
+  );
+
+  return (
+    <div className={`main-content ${isMobile ? 'mobile-view' : ''}`}>
+      {isPickingLocation && (
+        <div className="picking-mode-banner">
+          <p>Click on the map to select the location</p>
+          <button onClick={() => { setIsPickingLocation(false); setAddMode('manual'); }}>Cancel</button>
         </div>
       )}
 
-      {/* Mobile (capture-first): floating Add button + slide-up list drawer. */}
+      {/* Desktop: map + persistent sidebar list */}
+      {!isMobile && (
+        <>
+          {mapBlock}
+          <div className="sidebar">
+            {addMode === 'manual' && (
+              <AddGraveForm
+                onSubmit={handleAddGrave}
+                onClose={handleFormClose}
+                onPickLocation={handlePickLocationStart}
+                initialData={pickingFormState}
+              />
+            )}
+            <GraveSiteList
+              graveSites={graveSites}
+              onGraveClick={handleGraveClickFromList}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Mobile (capture-first): Map / List toggle */}
       {isMobile && (
         <>
-          {isAuthenticated && !drawerOpen && (
+          <div className="mobile-tabs">
             <button
-              className="mobile-fab"
-              onClick={() => setAddMode('chooser')}
+              className={mobileTab === 'map' ? 'active' : ''}
+              onClick={() => setMobileTab('map')}
             >
+              🗺️ Map
+            </button>
+            <button
+              className={mobileTab === 'list' ? 'active' : ''}
+              onClick={() => setMobileTab('list')}
+            >
+              📋 List ({graveSites.length})
+            </button>
+          </div>
+
+          <div className="mobile-panel">
+            {mobileTab === 'map' ? mapBlock : (
+              <div className="mobile-list">
+                <GraveSiteList
+                  graveSites={graveSites}
+                  onGraveClick={(site) => { setMobileTab('map'); handleGraveClickFromList(site); }}
+                />
+              </div>
+            )}
+          </div>
+
+          {isAuthenticated && (
+            <button className="mobile-fab" onClick={() => setAddMode('chooser')}>
               + Add Grave
             </button>
           )}
-
-          <div className={`mobile-drawer ${drawerOpen ? 'open' : ''}`}>
-            <button
-              className="mobile-drawer-handle"
-              onClick={() => setDrawerOpen((open) => !open)}
-              aria-expanded={drawerOpen}
-            >
-              <span className="mobile-drawer-grip" />
-              {drawerOpen ? 'Hide list' : `Browse graves (${graveSites.length})`}
-            </button>
-            <div className="mobile-drawer-body">
-              <GraveSiteList
-                graveSites={graveSites}
-                onGraveClick={(site) => { handleGraveClickFromList(site); setDrawerOpen(false); }}
-              />
-            </div>
-          </div>
 
           {/* Manual form renders as a full-screen overlay on mobile. */}
           {addMode === 'manual' && (
@@ -388,19 +400,21 @@ function App() {
             )}
           </div>
         </header>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <Home
-                addMode={isAuthenticated ? addMode : null}
-                setAddMode={setAddMode}
-              />
-            }
-          />
-          <Route path="/acknowledgements" element={<Acknowledgements />} />
-          <Route path="/login" element={<Login />} />
-        </Routes>
+        <main className="app-body">
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <Home
+                  addMode={isAuthenticated ? addMode : null}
+                  setAddMode={setAddMode}
+                />
+              }
+            />
+            <Route path="/acknowledgements" element={<Acknowledgements />} />
+            <Route path="/login" element={<Login />} />
+          </Routes>
+        </main>
       </div>
     </Router>
   );
