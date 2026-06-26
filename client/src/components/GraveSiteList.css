@@ -5,6 +5,13 @@
   background-color: var(--bg-main);
 }
 
+.empty-state {
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 2rem 1rem;
+}
+
 .grave-site-list h2 {
   margin-top: 0;
   color: var(--primary);

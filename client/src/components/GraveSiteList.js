@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './GraveSiteList.css';
 
-function GraveSiteList({ graveSites, onGraveClick }) {
+function GraveSiteList({ graveSites, onGraveClick, loading = false }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [expandedIntros, setExpandedIntros] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -94,6 +94,15 @@ function GraveSiteList({ graveSites, onGraveClick }) {
         </div>
       </div>
       <div className="sites-container">
+        {filteredGraveSites.length === 0 && (
+          <p className="empty-state">
+            {loading
+              ? 'Loading graves…'
+              : graveSites.length === 0
+                ? 'No graves recorded yet.'
+                : 'No graves match your search.'}
+          </p>
+        )}
         {filteredGraveSites.map((site) => (
           <div key={site.id} className="grave-site-card">
             <h3

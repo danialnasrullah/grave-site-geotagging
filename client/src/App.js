@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import MarkerClusterGroup from 'react-leaflet-cluster';
+import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { supabase } from './supabaseClient';
@@ -13,6 +14,21 @@ import AddNowFlow from './components/AddNowFlow';
 import Acknowledgements from './components/Acknowledgements';
 import Login from './components/Login';
 import './App.css';
+
+// Safe date helpers — graves may now be added with only a name, so dates can be
+// null/empty. These return null for missing/invalid values so the UI can skip
+// rendering instead of showing "1/1/1970" or "Invalid Date".
+const yearOf = (value) => {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d.getFullYear();
+};
+
+const formatDate = (value) => {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString();
+};
 
 // Custom Marker Icon
 const createCustomIcon = (profession, isHighlighted) => {
@@ -62,6 +78,7 @@ function Home({ addMode, setAddMode }) {
   const { isAuthenticated } = useAuth();
   const [mobileTab, setMobileTab] = useState('map'); // 'map' | 'list'
   const [graveSites, setGraveSites] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [hoveredGrave, setHoveredGrave] = useState(null);
   const [selectedGrave, setSelectedGrave] = useState(null); // For the independent popup
   const [flyToLocation, setFlyToLocation] = useState(null); // New state for navigation
@@ -76,6 +93,7 @@ function Home({ addMode, setAddMode }) {
   }, []);
 
   const fetchGraveSites = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('grave_sites')
@@ -90,6 +108,8 @@ function Home({ addMode, setAddMode }) {
       setGraveSites(graveSitesList);
     } catch (error) {
       console.error('Error fetching grave sites:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -172,6 +192,7 @@ function Home({ addMode, setAddMode }) {
           center={[31.5496, 74.3078]}
           zoom={16}
           minZoom={15}
+          maxZoom={21}
           maxBounds={[
             [31.542694, 74.302972],
             [31.556556, 74.312750]
@@ -182,45 +203,58 @@ function Home({ addMode, setAddMode }) {
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            maxNativeZoom={19}
+            maxZoom={21}
           />
 
           <MapClickHandler isPicking={isPickingLocation} onLocationPicked={handleLocationPicked} />
           <MapController target={flyToLocation} />
 
-          {graveSites.map((site) => {
-            const position = site.derivedCoordinates ? [site.derivedCoordinates.lat, site.derivedCoordinates.lng] : null;
-            if (!position) return null;
+          <MarkerClusterGroup chunkedLoading maxClusterRadius={45} spiderfyOnMaxZoom>
+            {graveSites.map((site) => {
+              const position = site.derivedCoordinates ? [site.derivedCoordinates.lat, site.derivedCoordinates.lng] : null;
+              if (!position) return null;
 
-            const isHighlighted = site.id === highlightedGraveId;
+              const isHighlighted = site.id === highlightedGraveId;
 
-            return (
-              <Marker
-                key={site.id}
-                position={position}
-                icon={createCustomIcon(site.profession, isHighlighted)}
-                eventHandlers={{
-                  mouseover: () => !isPickingLocation && setHoveredGrave(site),
-                  mouseout: () => setHoveredGrave(null),
-                  click: () => {
-                    if (!isPickingLocation) {
-                      setSelectedGrave(site);
-                      setHoveredGrave(null); // Clear hover when clicked
+              return (
+                <Marker
+                  key={site.id}
+                  position={position}
+                  icon={createCustomIcon(site.profession, isHighlighted)}
+                  eventHandlers={{
+                    mouseover: () => !isPickingLocation && setHoveredGrave(site),
+                    mouseout: () => setHoveredGrave(null),
+                    click: () => {
+                      if (!isPickingLocation) {
+                        setSelectedGrave(site);
+                        setHoveredGrave(null); // Clear hover when clicked
+                      }
                     }
-                  }
-                }}
-              />
-            );
-          })}
+                  }}
+                />
+              );
+            })}
+          </MarkerClusterGroup>
         </MapContainer>
+
+        {loading && (
+          <div className="map-loading" role="status" aria-live="polite">
+            <span className="map-loading-spinner" />
+            Loading graves…
+          </div>
+        )}
 
         {/* Hover Card (Only show if nothing is selected to avoid clutter) */}
         {hoveredGrave && !selectedGrave && (
           <div className="hover-card">
             <h3>{hoveredGrave.name}</h3>
-            <span className="hover-profession">{hoveredGrave.profession}</span>
-            <div className="hover-dates">
-              {hoveredGrave.dateOfBirth ? new Date(hoveredGrave.dateOfBirth).getFullYear() : '?'} - {new Date(hoveredGrave.dateOfDeath).getFullYear()}
-            </div>
+            {hoveredGrave.profession && <span className="hover-profession">{hoveredGrave.profession}</span>}
+            {(yearOf(hoveredGrave.dateOfBirth) || yearOf(hoveredGrave.dateOfDeath)) && (
+              <div className="hover-dates">
+                {yearOf(hoveredGrave.dateOfBirth) || '?'} – {yearOf(hoveredGrave.dateOfDeath) || '?'}
+              </div>
+            )}
             {hoveredGrave.topImage && (
               <img src={hoveredGrave.topImage} alt={hoveredGrave.name} className="hover-image" />
             )}
@@ -242,13 +276,17 @@ function Home({ addMode, setAddMode }) {
 
               <div className="popup-header">
                 <h2>{selectedGrave.name}</h2>
-                <span className="popup-profession-tag">{selectedGrave.profession}</span>
+                {selectedGrave.profession && <span className="popup-profession-tag">{selectedGrave.profession}</span>}
               </div>
 
-              <div className="popup-dates-large">
-                {selectedGrave.dateOfBirth ? new Date(selectedGrave.dateOfBirth).toLocaleDateString() : 'Unknown'} — {new Date(selectedGrave.dateOfDeath).toLocaleDateString()}
-                {selectedGrave.age && <span className="popup-age"> (Age {selectedGrave.age})</span>}
-              </div>
+              {(formatDate(selectedGrave.dateOfBirth) || formatDate(selectedGrave.dateOfDeath) || selectedGrave.age) && (
+                <div className="popup-dates-large">
+                  {(formatDate(selectedGrave.dateOfBirth) || formatDate(selectedGrave.dateOfDeath)) && (
+                    <>{formatDate(selectedGrave.dateOfBirth) || 'Unknown'} — {formatDate(selectedGrave.dateOfDeath) || 'Unknown'}</>
+                  )}
+                  {selectedGrave.age && <span className="popup-age"> (Age {selectedGrave.age})</span>}
+                </div>
+              )}
 
               {selectedGrave.causeOfDeath && (
                 <div className="popup-meta">
@@ -257,15 +295,22 @@ function Home({ addMode, setAddMode }) {
               )}
 
               {/* Image Carousel / Grid */}
-              <div className="popup-images-scroll">
-                {(selectedGrave.images || (selectedGrave.imageUrl ? [selectedGrave.imageUrl] : [])).map((img, idx) => (
-                  <img key={idx} src={img} alt={`${selectedGrave.name} ${idx}`} className="popup-detail-image" />
-                ))}
-              </div>
+              {(() => {
+                const imgs = selectedGrave.images || (selectedGrave.imageUrl ? [selectedGrave.imageUrl] : []);
+                return imgs.length > 0 ? (
+                  <div className="popup-images-scroll">
+                    {imgs.map((img, idx) => (
+                      <img key={idx} src={img} alt={`${selectedGrave.name} ${idx}`} className="popup-detail-image" />
+                    ))}
+                  </div>
+                ) : null;
+              })()}
 
-              <div className="popup-body-text">
-                <p>{selectedGrave.intro}</p>
-              </div>
+              {selectedGrave.intro && (
+                <div className="popup-body-text">
+                  <p>{selectedGrave.intro}</p>
+                </div>
+              )}
 
             </div>
           </div>
@@ -298,6 +343,7 @@ function Home({ addMode, setAddMode }) {
             )}
             <GraveSiteList
               graveSites={graveSites}
+              loading={loading}
               onGraveClick={handleGraveClickFromList}
             />
           </div>
@@ -327,6 +373,7 @@ function Home({ addMode, setAddMode }) {
               <div className="mobile-list">
                 <GraveSiteList
                   graveSites={graveSites}
+                  loading={loading}
                   onGraveClick={(site) => { setMobileTab('map'); handleGraveClickFromList(site); }}
                 />
               </div>
@@ -379,10 +426,10 @@ function App() {
       <div className="app">
         <header className="app-header">
           <div className="header-left">
-            <h1>Lahore Graves</h1>
+            <h1>Geo-tagging Project - Miani Sahab</h1>
             <nav className="header-nav">
-              <Link to="/" className="nav-link">Home</Link>
-              <Link to="/acknowledgements" className="nav-link">Acknowledgements</Link>
+              <NavLink to="/" end className="nav-link">Home</NavLink>
+              <NavLink to="/acknowledgements" className="nav-link">Acknowledgements</NavLink>
             </nav>
           </div>
           <div className="header-actions">
