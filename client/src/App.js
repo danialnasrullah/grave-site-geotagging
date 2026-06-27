@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-router-dom';
@@ -88,8 +88,25 @@ function Home({ addMode, setAddMode }) {
   const [isPickingLocation, setIsPickingLocation] = useState(false);
   const [pickingFormState, setPickingFormState] = useState(null);
 
+  // Refs to the cluster group and individual markers, so we can reveal a
+  // specific grave (declustering/spiderfying) when picked from the list.
+  const clusterRef = useRef(null);
+  const markerRefs = useRef({});
+
   useEffect(() => {
     fetchGraveSites();
+  }, []);
+
+  // The preview card is a press-and-hold (mobile) / hover (desktop) affordance.
+  // Touch fires mouseover but never mouseout, so clear it when the finger lifts.
+  useEffect(() => {
+    const clear = () => setHoveredGrave(null);
+    document.addEventListener('touchend', clear);
+    document.addEventListener('touchcancel', clear);
+    return () => {
+      document.removeEventListener('touchend', clear);
+      document.removeEventListener('touchcancel', clear);
+    };
   }, []);
 
   const fetchGraveSites = async () => {
@@ -173,16 +190,26 @@ function Home({ addMode, setAddMode }) {
     }
   };
 
+  const highlightGrave = (site) => {
+    setHighlightedGraveId(site.id);
+    setTimeout(() => setHighlightedGraveId(null), 2500);
+  };
+
   const handleGraveClickFromList = (site) => {
     setSelectedGrave(null); // Ensure card is closed
-    if (site.derivedCoordinates) {
-      setFlyToLocation([site.derivedCoordinates.lat, site.derivedCoordinates.lng]);
+    if (!site.derivedCoordinates) return;
 
-      // Trigger highlight
-      setHighlightedGraveId(site.id);
-      setTimeout(() => {
-        setHighlightedGraveId(null);
-      }, 1500); // 1.5 seconds highlight
+    const cluster = clusterRef.current;
+    const marker = markerRefs.current[site.id];
+
+    // Preferred: ask the cluster to reveal this exact marker (zooms in and/or
+    // spiderfies so the highlighted pin is actually visible, not hidden in a
+    // cluster). Fall back to a plain flyTo if the refs aren't ready.
+    if (cluster && marker && typeof cluster.zoomToShowLayer === 'function') {
+      cluster.zoomToShowLayer(marker, () => highlightGrave(site));
+    } else {
+      setFlyToLocation([site.derivedCoordinates.lat, site.derivedCoordinates.lng]);
+      highlightGrave(site);
     }
   };
 
@@ -210,7 +237,7 @@ function Home({ addMode, setAddMode }) {
           <MapClickHandler isPicking={isPickingLocation} onLocationPicked={handleLocationPicked} />
           <MapController target={flyToLocation} />
 
-          <MarkerClusterGroup chunkedLoading maxClusterRadius={45} spiderfyOnMaxZoom>
+          <MarkerClusterGroup ref={clusterRef} chunkedLoading maxClusterRadius={45} spiderfyOnMaxZoom>
             {graveSites.map((site) => {
               const position = site.derivedCoordinates ? [site.derivedCoordinates.lat, site.derivedCoordinates.lng] : null;
               if (!position) return null;
@@ -222,6 +249,10 @@ function Home({ addMode, setAddMode }) {
                   key={site.id}
                   position={position}
                   icon={createCustomIcon(site.profession, isHighlighted)}
+                  ref={(m) => {
+                    if (m) markerRefs.current[site.id] = m;
+                    else delete markerRefs.current[site.id];
+                  }}
                   eventHandlers={{
                     mouseover: () => !isPickingLocation && setHoveredGrave(site),
                     mouseout: () => setHoveredGrave(null),
@@ -374,7 +405,12 @@ function Home({ addMode, setAddMode }) {
                 <GraveSiteList
                   graveSites={graveSites}
                   loading={loading}
-                  onGraveClick={(site) => { setMobileTab('map'); handleGraveClickFromList(site); }}
+                  onGraveClick={(site) => {
+                    // Switch to the map first; wait for it (and the cluster) to
+                    // mount before revealing the picked grave.
+                    setMobileTab('map');
+                    setTimeout(() => handleGraveClickFromList(site), 450);
+                  }}
                 />
               </div>
             )}
